@@ -1,0 +1,573 @@
+/* ==========================================================================
+   Maruf Traders — Responsive Stylesheet
+   --------------------------------------------------------------------------
+   Purpose : Breakpoint system + mobile-first hardening for the dashboard UI.
+   Scope   : Layout, navigation, tables, forms, modals — mobile optimized.
+   Author  : Frontend team
+   Updated : 2026
+
+   Breakpoint map
+   --------------------------------------------------------------------------
+     >= 1200px   Desktop            (unchanged — reference layout)
+     992–1199px  Small laptop       (unchanged)
+     768–991px   Tablet             (unchanged)
+     480–767px   Large mobile       (hardened)
+     <  480px    Small mobile       (hardened)
+
+   Conventions
+   --------------------------------------------------------------------------
+   - Mobile overrides live in max-width queries layered from large to small,
+     matching the existing cascade so specificity stays predictable.
+   - `!important` is avoided except where a fixed desktop value must be
+     overridden (documented inline where used).
+   - Logical properties (inline/block) are used in new mobile rules so the
+     UI remains correct if RTL support is ever introduced.
+   - Touch targets follow the 44×44px WCAG 2.5.5 / Apple HIG minimum.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   0. Global safety net
+   -------------------------------------------------------------------------- */
+html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.table-responsive,
+.dark-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+}
+
+/* Consistent, visible focus ring across all interactive elements.
+   Required for keyboard/assistive-tech users on every breakpoint. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.btn-primary-custom:focus-visible,
+.btn-secondary-custom:focus-visible {
+    outline: 2px solid var(--accent-color, #4f8cff);
+    outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   1. Desktop — Large screens (>= 1200px)
+   -------------------------------------------------------------------------- */
+@media (min-width: 1200px) {
+    .kpi-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* --------------------------------------------------------------------------
+   2. Small laptop (992px – 1199px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1199px) {
+    .content-body {
+        padding: 22px 26px;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   3. Tablet (768px – 991px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 991px) {
+    :root {
+        --sidebar-width: 240px;
+    }
+
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .content-body {
+        padding: 20px 22px;
+    }
+
+    .page-title {
+        font-size: 1.3rem;
+    }
+
+    .app-navbar {
+        padding: 0 20px;
+    }
+
+    .row.g-4 > [class*="col-"] {
+        margin-bottom: 0;
+    }
+}
+
+/* ==========================================================================
+   4. MOBILE (< 768px) — hardened
+   ==========================================================================
+   Sub-sections:
+     4.1  Design tokens
+     4.2  Forms & inputs
+     4.3  Navigation (sidebar + navbar)
+     4.4  Layout & typography
+     4.5  Data tables
+     4.6  Buttons, modals, dropdowns
+   ========================================================================== */
+@media (max-width: 767px) {
+
+    /* ---- 4.1 Design tokens ------------------------------------------- */
+    :root {
+        --sidebar-width: 260px;
+        --tap-target-min: 44px;      /* WCAG 2.5.5 minimum */
+        --mobile-radius: 10px;
+        --mobile-gap-sm: 8px;
+        --mobile-gap-md: 14px;
+    }
+
+    /* ---- 4.2 Forms & inputs -------------------------------------------
+       16px minimum prevents iOS Safari from auto-zooming on focus. */
+    input,
+    select,
+    textarea,
+    .form-control,
+    .form-select {
+        font-size: 16px !important; /* overrides component-level font-size */
+        min-height: var(--tap-target-min);
+    }
+
+    label,
+    .form-label {
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
+
+    .row.g-3 > [class*="col-"] {
+        margin-bottom: var(--mobile-gap-sm);
+    }
+
+    /* ---- 4.3 Navigation ------------------------------------------------ */
+    .app-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        inline-size: var(--sidebar-width);
+        max-inline-size: 85vw;   /* never obscure the entire viewport */
+        z-index: 1050;
+    }
+
+    .sidebar-mobile-open .app-sidebar {
+        transform: translateX(0);
+    }
+
+    /* Lock the underlying page while an overlay (sidebar/modal) is open,
+       so content behind it doesn't scroll independently on iOS. */
+    body.sidebar-mobile-open,
+    body.modal-open {
+        overflow: hidden;
+        position: fixed;
+        inset-inline: 0;
+    }
+
+    .sidebar-backdrop {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 1040;
+    }
+
+    .sidebar-mobile-open .sidebar-backdrop {
+        display: block;
+    }
+
+    .main-content,
+    .sidebar-collapsed .main-content {
+        margin-inline-start: 0 !important; /* overrides desktop sidebar offset */
+    }
+
+    .app-navbar {
+        padding-inline: 14px;
+        padding-inline-start: calc(14px + env(safe-area-inset-left));
+        padding-inline-end: calc(14px + env(safe-area-inset-right));
+        block-size: 62px;
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+    }
+
+    .sidebar-toggle-btn,
+    .navbar-icon-btn,
+    .app-navbar button {
+        min-inline-size: var(--tap-target-min);
+        min-block-size: var(--tap-target-min);
+    }
+
+    .user-meta {
+        display: none;
+    }
+
+    .navbar-right {
+        gap: 10px;
+    }
+
+    .breadcrumb-area {
+        display: none;
+    }
+
+    /* ---- 4.4 Layout & typography ---------------------------------------
+       clamp() gives fluid sizing between the small- and large-mobile
+       breakpoints instead of a hard jump at 480px. */
+    .content-body {
+        padding: var(--mobile-gap-md);
+        padding-block-end: calc(var(--mobile-gap-md) + env(safe-area-inset-bottom));
+    }
+
+    .page-title {
+        font-size: clamp(1.05rem, 4vw, 1.3rem);
+    }
+
+    .page-header-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .page-header-container .d-flex.align-items-center.gap-2 {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    #dashboardPeriodFilter {
+        flex: 1;
+        min-inline-size: 140px;
+        inline-size: auto !important; /* overrides fixed desktop width */
+        min-block-size: var(--tap-target-min);
+    }
+
+    /* KPI grid: 2-up on mobile (both the sales/collection row and the
+       financial row use the same .kpi-grid class, so this applies to
+       both). Falls back to 1 column only on very narrow phones — see
+       section 5. */
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .kpi-card {
+        padding: 14px;
+        min-inline-size: 0; /* let grid items shrink below content width */
+    }
+
+    .kpi-header {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .kpi-title {
+        font-size: 0.72rem;
+        line-height: 1.25;
+    }
+
+    .kpi-icon-wrap {
+        inline-size: 34px;
+        block-size: 34px;
+        font-size: 0.95rem;
+        flex-shrink: 0;
+    }
+
+    .kpi-value {
+        font-size: 1.15rem;
+        word-break: break-word;
+    }
+
+    .kpi-footer {
+        font-size: 0.68rem;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .dark-card {
+        padding: 16px;
+        border-radius: var(--mobile-radius);
+    }
+
+    /* ---- Dashboard widgets ------------------------------------------- */
+
+    /* Sales/Collection chart card: fixed 320px desktop height is too tall
+       on phones — scale it down and let it breathe. */
+    .chart-container-canvas {
+        block-size: 220px !important; /* overrides inline/desktop height */
+    }
+
+    .profit-breakdown-box {
+        gap: 10px;
+    }
+
+    .profit-item {
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 0.85rem;
+    }
+
+    .profit-item.net-profit .fs-5 {
+        font-size: 1.05rem !important; /* overrides Bootstrap fs-5 utility */
+    }
+
+    .stock-item-header {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .low-stock-alert-panel {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .low-stock-alert-panel .btn-danger-custom {
+        inline-size: 100%;
+        justify-content: center;
+    }
+
+    .card-header-clean {
+        margin-bottom: var(--mobile-gap-md);
+        padding-bottom: 10px;
+        flex-wrap: wrap;
+        gap: var(--mobile-gap-sm);
+    }
+
+    .card-title-clean {
+        font-size: 0.95rem;
+    }
+
+    /* ---- 4.5 Data tables -------------------------------------------------
+       Default: horizontal scroll (unchanged behaviour).
+       Opt-in : add `.table-stack` to convert rows into labelled cards,
+                using each cell's `data-label` attribute as the row heading. */
+    .dark-table thead th,
+    .dark-table tbody td {
+        padding: 10px 12px;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+
+    .table-stack thead {
+        display: none;
+    }
+
+    .table-stack,
+    .table-stack tbody,
+    .table-stack tr,
+    .table-stack td {
+        display: block;
+        inline-size: 100%;
+    }
+
+    .table-stack tr {
+        margin-bottom: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--mobile-radius);
+        overflow: hidden;
+    }
+
+    .table-stack td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        white-space: normal;
+        text-align: end;
+    }
+
+    .table-stack td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        opacity: 0.75;
+        text-align: start;
+    }
+
+    /* ---- 4.6 Buttons, modals, dropdowns ----------------------------------- */
+    .btn-primary-custom,
+    .btn-secondary-custom {
+        font-size: 0.82rem;
+        padding: 12px 14px;
+        min-block-size: var(--tap-target-min);
+    }
+
+    .page-header-container .btn-primary-custom,
+    .page-header-container .btn-secondary-custom,
+    .modal-footer .btn-primary-custom,
+    .modal-footer .btn-secondary-custom {
+        inline-size: 100%;
+        justify-content: center;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse;
+        gap: var(--mobile-gap-sm);
+    }
+
+    .modal-dialog {
+        margin: 10px;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+        max-block-size: calc(100vh - 20px);
+        overflow-y: auto;
+    }
+
+    .dropdown-menu {
+        min-inline-size: 100%;
+    }
+
+    .login-card,
+    .setup-card {
+        padding: 28px 20px !important; /* overrides desktop card padding */
+        max-inline-size: 100% !important;
+    }
+}
+
+/* ==========================================================================
+   5. Small phones (< 480px)
+   ========================================================================== */
+@media (max-width: 479px) {
+    .app-navbar {
+        padding-inline: 10px;
+        padding-inline-start: calc(10px + env(safe-area-inset-left));
+        padding-inline-end: calc(10px + env(safe-area-inset-right));
+    }
+
+    .brand-name {
+        font-size: 0.98rem;
+    }
+
+    .brand-subtitle {
+        display: none;
+    }
+
+    .content-body {
+        padding: 10px;
+        padding-block-end: calc(10px + env(safe-area-inset-bottom));
+    }
+
+    .kpi-value {
+        font-size: 1.2rem;
+    }
+
+    .kpi-icon-wrap {
+        inline-size: 36px;
+        block-size: 36px;
+        font-size: 1rem;
+    }
+
+    .page-title {
+        font-size: 1.15rem;
+    }
+
+    .card-title-clean span {
+        font-size: 0.9rem;
+    }
+
+    .dark-table thead th,
+    .dark-table tbody td {
+        padding: 8px 10px;
+        font-size: 0.76rem;
+    }
+
+    .table-stack td {
+        font-size: 0.78rem;
+        padding: 8px 10px;
+    }
+
+    .badge-custom {
+        font-size: 0.68rem;
+        padding: 4px 8px;
+    }
+
+    .user-avatar {
+        inline-size: 34px;
+        block-size: 34px;
+        font-size: 0.85rem;
+    }
+
+    .btn-primary-custom,
+    .btn-secondary-custom {
+        font-size: 0.8rem;
+        padding: 11px 12px;
+    }
+
+    .modal-dialog {
+        margin: 6px;
+    }
+
+    .kpi-card {
+        padding: 12px;
+    }
+
+    .kpi-title {
+        font-size: 0.68rem;
+    }
+
+    .chart-container-canvas {
+        block-size: 190px !important;
+    }
+}
+
+/* Very narrow phones (< 360px): two KPI columns get too cramped for
+   currency values — drop to a single column here only. */
+@media (max-width: 359px) {
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   6. Contextual media features
+   ========================================================================== */
+
+/* Landscape phones / short-height screens: keep the sidebar navigable and
+   free up vertical space by un-sticking the navbar. */
+@media (max-height: 480px) and (max-width: 900px) {
+    .app-sidebar {
+        overflow-y: auto;
+    }
+
+    .app-navbar {
+        position: static;
+    }
+}
+
+/* Respect the OS-level reduced-motion preference. */
+@media (prefers-reduced-motion: reduce) {
+    .app-sidebar {
+        transition: none;
+    }
+}
+
+/* High-DPI touch devices: hairline borders can disappear — nudge to 1px
+   solid minimum so card/table boundaries stay visible on mobile screens. */
+@media (max-width: 767px) and (min-resolution: 2dppx) {
+    .dark-card,
+    .table-stack tr {
+        border-width: 1px;
+    }
+}
+
+/* ==========================================================================
+   7. Print — identical output regardless of breakpoint
+   ========================================================================== */
+@media print {
+    .app-sidebar,
+    .app-navbar,
+    .no-print,
+    .sidebar-backdrop {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-inline-start: 0 !important;
+    }
+}
